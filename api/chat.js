@@ -2,6 +2,9 @@ import { LEVELS, MODES, SUBS, buildSystem, pick } from "../lib/lesson.js";
 import { redis, clientIp, burst, sendJson } from "../lib/util.js";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash"; // можно сменить без правки кода: переменная GEMINI_MODEL в Vercel
+// Запасная модель: если основная перегружена (503/429/500), запрос автоматически уходит на неё.
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.7-flash";
+const ATTEMPT_TIMEOUT_MS = 11000; // две попытки укладываются в клиентские 25 с
 const DAILY_LIMIT_IP = 500;       // защита бюджета; в школе много учеников за одним IP
 const BURST_LIMIT = 15;           // сообщений с одного IP в минуту
 const MAX_TEXT = 500;
@@ -78,42 +81,55 @@ export default async function handler(req, res) {
     return sendJson(res, 400, { error: "bad_request" });
   if (contents[0].role === "model") contents.unshift({ role: "user", parts: [{ text: "(Lesson started.)" }] });
 
-  let r;
-  try {
-    r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_KEY },
-        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: buildSystem({ level, lang, src, mode, sub }) }] },
-          contents,
-          generationConfig: {
-            // у Gemini 3.x нельзя полностью отключить "размышление": ставим low и даём запас токенов,
-            // чтобы оно не съело лимит и ответ не вышел пустым. Длину ответа держит промпт.
-            maxOutputTokens: MODES[mode].tokens + 1000,
-            temperature: 0.7,
-            thinkingConfig: { thinkingLevel: "low" },
-          },
-        }),
-      }
-    );
-  } catch (e) {
-    console.error("Gemini fetch failed", String(e));
-    return sendJson(res, 503, { error: "busy" });
+  const payload = JSON.stringify({
+    systemInstruction: { parts: [{ text: buildSystem({ level, lang, src, mode, sub }) }] },
+    contents,
+    generationConfig: {
+      // у Gemini 3.x нельзя полностью отключить "размышление": ставим low и даём запас токенов,
+      // чтобы оно не съело лимит и ответ не вышел пустым. Длину ответа держит промпт.
+      maxOutputTokens: MODES[mode].tokens + 1000,
+      temperature: 0.7,
+      thinkingConfig: { thinkingLevel: "low" },
+    },
+  });
+
+  const models = FALLBACK_MODEL && FALLBACK_MODEL !== MODEL ? [MODEL, FALLBACK_MODEL] : [MODEL];
+  let reply = "", lastStatus = 0;
+  for (const model of models) {
+    let r;
+    try {
+      r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_KEY },
+          signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+          body: payload,
+        }
+      );
+    } catch (e) {
+      console.error("Gemini fetch failed", model, String(e));
+      lastStatus = 503;
+      continue; // пробуем запасную модель
+    }
+    if (!r.ok) {
+      const errText = await r.text().catch(() => "");
+      console.error("Gemini error", model, r.status, errText.slice(0, 500));
+      lastStatus = r.status;
+      continue; // 503/429/404 и т.п.: пробуем запасную модель
+    }
+    const data = await r.json().catch(() => ({}));
+    reply = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim();
+    if (reply) break;
+    console.error("Gemini empty reply", model, JSON.stringify(data).slice(0, 500));
+    lastStatus = -1;
   }
 
-  if (!r.ok) {
-    const errText = await r.text().catch(() => "");
-    console.error("Gemini error", r.status, errText.slice(0, 500));
-    const busy = [429, 500, 503, 504].includes(r.status);
+  if (!reply) {
+    if (lastStatus === -1) return sendJson(res, 502, { error: "empty" });
+    const busy = [0, 429, 500, 503, 504].includes(lastStatus);
     return sendJson(res, busy ? 503 : 502, { error: busy ? "busy" : "upstream" });
   }
-
-  const data = await r.json();
-  const reply = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim();
-  if (!reply) { console.error("Gemini empty reply", JSON.stringify(data).slice(0, 500)); return sendJson(res, 502, { error: "empty" }); }
 
   if (key) { try { await redis.set(key, used + 1, { ex: 172800 }); } catch {} }
   return sendJson(res, 200, { reply });
