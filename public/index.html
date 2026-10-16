@@ -672,7 +672,7 @@ function askQ(keep){
 function finish(){
   level = score <= 2 ? "A1" : score <= 5 ? "A2" : score <= 8 ? "B1" : "B2";
   store.set("level", level); store.set("score", String(score));
-  applyLang(); show("result");
+  show("result"); applyLang(); // сначала смена экрана, иначе applyLang рисует несуществующий 11-й вопрос
 }
 function startTest(){ i = 0; score = 0; show("test"); askQ(); }
 
