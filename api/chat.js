@@ -1,7 +1,7 @@
 import { LEVELS, MODES, SUBS, buildSystem, pick } from "../lib/lesson.js";
 import { redis, clientIp, burst, sendJson } from "../lib/util.js";
 
-const MODEL = "gemini-2.5-flash"; // проверь актуальное имя в Google AI Studio
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash"; // можно сменить без правки кода: переменная GEMINI_MODEL в Vercel
 const DAILY_LIMIT_IP = 500;       // защита бюджета; в школе много учеников за одним IP
 const BURST_LIMIT = 15;           // сообщений с одного IP в минуту
 const MAX_TEXT = 500;
@@ -21,7 +21,7 @@ async function check(req, res) {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_KEY },
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Say hi" }] }], generationConfig: { maxOutputTokens: 20, thinkingConfig: { thinkingBudget: 0 } } }),
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Say hi" }] }], generationConfig: { maxOutputTokens: 300, thinkingConfig: { thinkingLevel: "low" } } }),
       });
       out.geminiStatus = r.status;
       const j = await r.json().catch(() => ({}));
@@ -90,9 +90,11 @@ export default async function handler(req, res) {
           systemInstruction: { parts: [{ text: buildSystem({ level, lang, src, mode, sub }) }] },
           contents,
           generationConfig: {
-            maxOutputTokens: MODES[mode].tokens,
+            // у Gemini 3.x нельзя полностью отключить "размышление": ставим low и даём запас токенов,
+            // чтобы оно не съело лимит и ответ не вышел пустым. Длину ответа держит промпт.
+            maxOutputTokens: MODES[mode].tokens + 1000,
             temperature: 0.7,
-            thinkingConfig: { thinkingBudget: 0 },
+            thinkingConfig: { thinkingLevel: "low" },
           },
         }),
       }
