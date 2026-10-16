@@ -11,7 +11,28 @@ const UPSTREAM_TIMEOUT_MS = 20000; // меньше клиентских 25 с
 // День считаем по Казахстану (UTC+5)
 const dayKey = ip => `d:${ip}:${new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10)}`;
 
+// Диагностика: открой в браузере /api/chat?check=1, чтобы увидеть, что не так (секреты не показываются).
+async function check(req, res) {
+  if (await burst("c:" + clientIp(req), 5)) return sendJson(res, 429, { error: "rate_limited" });
+  const out = { hasKey: !!process.env.GEMINI_KEY, hasRedis: !!redis, model: MODEL };
+  if (out.hasKey) {
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_KEY },
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Say hi" }] }], generationConfig: { maxOutputTokens: 20, thinkingConfig: { thinkingBudget: 0 } } }),
+      });
+      out.geminiStatus = r.status;
+      const j = await r.json().catch(() => ({}));
+      out.geminiMessage = j.error?.message?.slice(0, 300) || (j.candidates ? "ok" : "no candidates");
+    } catch (e) { out.geminiStatus = "network"; out.geminiMessage = String(e).slice(0, 200); }
+  }
+  return sendJson(res, 200, out);
+}
+
 export default async function handler(req, res) {
+  if (req.method === "GET" && req.query?.check) return check(req, res);
   if (req.method !== "POST") return sendJson(res, 405, { error: "method" });
   if (!process.env.GEMINI_KEY) return sendJson(res, 502, { error: "upstream" });
 
@@ -76,18 +97,21 @@ export default async function handler(req, res) {
         }),
       }
     );
-  } catch {
+  } catch (e) {
+    console.error("Gemini fetch failed", String(e));
     return sendJson(res, 503, { error: "busy" });
   }
 
   if (!r.ok) {
+    const errText = await r.text().catch(() => "");
+    console.error("Gemini error", r.status, errText.slice(0, 500));
     const busy = [429, 500, 503, 504].includes(r.status);
     return sendJson(res, busy ? 503 : 502, { error: busy ? "busy" : "upstream" });
   }
 
   const data = await r.json();
   const reply = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim();
-  if (!reply) return sendJson(res, 502, { error: "empty" });
+  if (!reply) { console.error("Gemini empty reply", JSON.stringify(data).slice(0, 500)); return sendJson(res, 502, { error: "empty" }); }
 
   if (key) { try { await redis.set(key, used + 1, { ex: 172800 }); } catch {} }
   return sendJson(res, 200, { reply });
