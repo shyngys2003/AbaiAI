@@ -1,0 +1,94 @@
+import { LEVELS, MODES, SUBS, buildSystem, pick } from "../lib/lesson.js";
+import { redis, clientIp, burst, sendJson } from "../lib/util.js";
+
+const MODEL = "gemini-2.5-flash"; // проверь актуальное имя в Google AI Studio
+const DAILY_LIMIT_IP = 500;       // защита бюджета; в школе много учеников за одним IP
+const BURST_LIMIT = 15;           // сообщений с одного IP в минуту
+const MAX_TEXT = 500;
+const MAX_BODY = 20000;
+const UPSTREAM_TIMEOUT_MS = 20000; // меньше клиентских 25 с
+
+// День считаем по Казахстану (UTC+5)
+const dayKey = ip => `d:${ip}:${new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10)}`;
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") return sendJson(res, 405, { error: "method" });
+  if (!process.env.GEMINI_KEY) return sendJson(res, 502, { error: "upstream" });
+
+  // Vercel уже разобрал JSON в req.body (объект) или оставил строкой
+  let body = req.body;
+  try {
+    if (typeof body === "string") {
+      if (body.length > MAX_BODY) return sendJson(res, 413, { error: "too_large" });
+      body = JSON.parse(body);
+    } else if (JSON.stringify(body ?? {}).length > MAX_BODY) {
+      return sendJson(res, 413, { error: "too_large" });
+    }
+  } catch { return sendJson(res, 400, { error: "bad_request" }); }
+  if (!body || typeof body !== "object") body = {};
+
+  const ip = clientIp(req);
+  if (await burst(ip, BURST_LIMIT)) return sendJson(res, 429, { error: "rate_limited" });
+
+  let used = 0, key = null;
+  if (redis) {
+    key = dayKey(ip);
+    try {
+      used = parseInt(await redis.get(key), 10) || 0;
+      if (used >= DAILY_LIMIT_IP) return sendJson(res, 429, { error: "daily_limit" });
+    } catch { key = null; }
+  }
+
+  const level = pick(LEVELS, body.level, "A2");
+  const lang = body.lang === "kk" ? "kk" : "ru";
+  const src = body.src === "manual" ? "manual" : "test";
+  const mode = pick(MODES, body.mode, "free");
+  const pool = SUBS[mode];
+  const sub = pool ? pick(pool, body.sub, Object.keys(pool)[0]) : null;
+
+  const contents = (Array.isArray(body.messages) ? body.messages : [])
+    .filter(m => m && typeof m.text === "string" && m.text.trim())
+    .slice(-MODES[mode].hist)
+    .map(m => ({
+      role: m.role === "model" ? "model" : "user",
+      parts: [{ text: m.text.trim().slice(0, MAX_TEXT) }],
+    }));
+  if (!contents.length || contents[contents.length - 1].role !== "user")
+    return sendJson(res, 400, { error: "bad_request" });
+  if (contents[0].role === "model") contents.unshift({ role: "user", parts: [{ text: "(Lesson started.)" }] });
+
+  let r;
+  try {
+    r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_KEY },
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: buildSystem({ level, lang, src, mode, sub }) }] },
+          contents,
+          generationConfig: {
+            maxOutputTokens: MODES[mode].tokens,
+            temperature: 0.7,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
+        }),
+      }
+    );
+  } catch {
+    return sendJson(res, 503, { error: "busy" });
+  }
+
+  if (!r.ok) {
+    const busy = [429, 500, 503, 504].includes(r.status);
+    return sendJson(res, busy ? 503 : 502, { error: busy ? "busy" : "upstream" });
+  }
+
+  const data = await r.json();
+  const reply = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim();
+  if (!reply) return sendJson(res, 502, { error: "empty" });
+
+  if (key) { try { await redis.set(key, used + 1, { ex: 172800 }); } catch {} }
+  return sendJson(res, 200, { reply });
+}

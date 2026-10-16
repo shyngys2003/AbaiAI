@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "api/chat.js": { "maxDuration": 30 },
+    "api/sync.js": { "maxDuration": 10 }
+  }
+}

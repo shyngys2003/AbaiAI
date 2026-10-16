@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#070b1c">
+<title>Abai AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b1c;--panel:#111936;--panel2:#18214a;--line:#2a3566;--line2:#3d4a8c;
+  --ink:#eef1ff;--dim:#aab5e2;--violet:#8b7cff;--violet2:#6d5cf0;--cyan:#5ad1ff;
+  --gold:#ffc971;--on-gold:#1b1433;--danger:#ff9aa8;--ok:#7be0b0;
+}
+*{box-sizing:border-box}
+html{color-scheme:dark;-webkit-text-size-adjust:100%}
+body{margin:0;color:var(--ink);font:16px/1.55 "Noto Sans",system-ui,"Segoe UI",sans-serif;min-height:100vh;min-height:100dvh;
+  background:
+   radial-gradient(900px 520px at 6% -10%,#2b2478aa,transparent 62%),
+   radial-gradient(800px 520px at 100% 105%,#0d4a7a66,transparent 62%),
+   var(--bg);background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.55;z-index:0;
+  background:
+   radial-gradient(1px 1px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 78% 8%,#fff,transparent),
+   radial-gradient(1.5px 1.5px at 44% 62%,#fff,transparent),radial-gradient(1px 1px at 90% 74%,#fff,transparent),
+   radial-gradient(1px 1px at 25% 88%,#fff,transparent),radial-gradient(1px 1px at 62% 33%,#fff,transparent);
+  background-size:340px 340px}
+h1,h2,h3{line-height:1.25;margin:0;letter-spacing:-.01em}
+h1{font-size:1.7rem;font-weight:700}
+h2{font-size:1.2rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:12px;top:-60px;z-index:20;background:var(--gold);color:var(--on-gold);padding:10px 14px;border-radius:10px;font-weight:700}
+.skip:focus{top:12px}
+.hide{display:none!important}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:8px}
+.dim{color:var(--dim)}
+.small{font-size:.9rem}
+
+/* каркас */
+.app{position:relative;z-index:1;display:grid;grid-template-columns:268px minmax(0,1fr);min-height:100vh;min-height:100dvh}
+.side{position:sticky;top:0;height:100vh;height:100dvh;padding:20px 14px;display:flex;flex-direction:column;gap:18px;
+  border-right:1px solid var(--line);background:linear-gradient(180deg,#0e1431ee,#0a0f26ee)}
+.side-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:700;font-size:1.15rem;letter-spacing:.01em;padding:4px 6px;border-radius:10px}
+#navlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+#navlist a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;color:var(--dim);text-decoration:none;font-weight:500;border:1px solid transparent;transition:background .15s,color .15s,border-color .15s}
+#navlist a svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#navlist a:hover{background:#ffffff12;color:var(--ink)}
+#navlist a:active{background:#ffffff1c}
+#navlist a[aria-current="page"]{color:var(--ink);background:linear-gradient(135deg,#6d5cf044,#5ad1ff1f);border-color:var(--line2);box-shadow:inset 3px 0 0 var(--gold)}
+.soon{margin-left:auto;font-style:normal;font-size:.75rem;font-weight:600;color:var(--dim);border:1px solid var(--line2);border-radius:999px;padding:1px 8px}
+.mini{margin-top:auto;display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);text-decoration:none}
+.mini:hover{border-color:var(--line2)}
+.mini svg{width:44px;height:44px;flex:none}
+.mini b{display:block;font-size:1rem}
+.mini span{font-size:.875rem;color:var(--dim)}
+#lng,#syncBtn,.sel{font-family:inherit;font-weight:600;font-size:.875rem;background:transparent;color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:7px 12px;min-height:40px;cursor:pointer}
+#lng:hover,#syncBtn:hover,.sel:hover{background:#ffffff14}
+#lng:active,#syncBtn:active,.sel:active{background:#ffffff22}
+main{min-width:0;padding:24px;outline:0}
+.view{max-width:920px;margin:0 auto}
+.app.focus{grid-template-columns:1fr}
+.app.focus .side{display:none}
+.app.focus .view{max-width:640px}
+
+/* общие элементы */
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;color:var(--on-gold);
+  background:linear-gradient(135deg,#ffdc9a,#ffb84d);border:0;border-radius:12px;padding:12px 20px;min-height:46px;cursor:pointer;transition:filter .15s,transform .1s}
+.btn:hover{filter:brightness(1.07)}
+.btn:active{transform:translateY(1px);filter:brightness(.95)}
+.btn:disabled{opacity:.65;cursor:not-allowed;transform:none}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn.ghost:hover{background:#ffffff14;filter:none}
+.btn.loading .ico{display:none}
+.btn.loading::before{content:"";width:18px;height:18px;border-radius:50%;border:3px solid #1b143355;border-top-color:var(--on-gold);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.eyebrow{font-size:.875rem;font-weight:600;color:var(--cyan);letter-spacing:.02em}
+.tag{display:inline-block;font-size:.8rem;font-weight:600;color:var(--gold);border:1px solid #ffc97166;border-radius:999px;padding:1px 10px}
+.bar{height:8px;background:#ffffff1a;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .3s}
+.ava{position:relative;flex:none;width:36px;height:36px;border-radius:50%;background:radial-gradient(circle at 30% 28%,#d6cfff,#6d5cf0 55%,#1c1860)}
+.ava::after{content:"";position:absolute;left:-5px;right:-5px;top:50%;height:12px;border:2px solid var(--gold);border-radius:50%;transform:translateY(-50%) rotate(-18deg);opacity:.9}
+.brand .ava{width:28px;height:28px}
+
+/* тест */
+.q{font-size:1.3rem;font-weight:600;margin:6px 0 14px}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:8px 0;padding:13px 14px;min-height:52px;font:inherit;color:inherit;background:#ffffff08;border:1px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s}
+.opt:hover{border-color:var(--gold);background:#ffffff12}
+.opt:active{background:#ffffff1c}
+.opt b{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#ffffff14;color:var(--gold);font-size:.9rem}
+.center{text-align:center}
+.bigplanet{width:150px;height:150px;margin:8px auto}
+.bigplanet svg{width:100%;height:100%}
+
+/* главная */
+.hero{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;position:relative;overflow:hidden;
+  background:radial-gradient(500px 260px at 100% 0,#6d5cf044,transparent 70%),linear-gradient(180deg,var(--panel2),var(--panel))}
+.hero h1{margin:6px 0 8px}
+.hero .prog{margin:16px 0 6px}
+.hero .btn{margin-top:14px}
+.hero-planet{width:170px;height:170px;position:relative}
+.hero-planet::before{content:"";position:absolute;left:-26px;right:-26px;top:50%;height:60px;border:1px solid #ffffff2e;border-radius:50%;transform:translateY(-50%) rotate(-16deg)}
+.hero-planet svg{position:relative;width:100%;height:100%}
+.barrow{display:flex;justify-content:space-between;font-size:.9rem;color:var(--dim);margin-bottom:6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+.stat{padding:16px}
+.stat b{display:block;font-size:1.9rem;line-height:1.1;font-weight:700}
+.stat span{font-size:.9rem;color:var(--dim)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card h2 + p,.card h3 + p{margin-top:6px}
+.task blockquote{margin:12px 0;padding:10px 14px;border-left:3px solid var(--gold);background:#ffc97112;border-radius:0 10px 10px 0;font-weight:500}
+.sect{margin:26px 0 12px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;font:inherit;color:inherit;padding:16px;min-height:132px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel2),var(--panel))}
+.tile svg{width:28px;height:28px;fill:none;stroke:var(--cyan);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tile b{font-size:1rem}
+.tile span{font-size:.9rem;color:var(--dim)}
+button.tile{cursor:pointer;transition:border-color .15s,transform .1s}
+button.tile:hover{border-color:var(--gold)}
+button.tile:active{transform:translateY(1px)}
+.tile.is-soon{border-style:dashed;opacity:.9}
+.tile.is-soon .tag{color:var(--dim);border-color:var(--line2)}
+
+/* заглушки разделов */
+.soonbox{text-align:center;padding:40px 20px}
+.soonbox .ic{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;background:#ffffff10;border:1px solid var(--line2)}
+.soonbox .ic svg{width:32px;height:32px;fill:none;stroke:var(--cyan);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.soonbox p{max-width:420px;margin:10px auto 0}
+.soonbox .btn{margin-top:18px}
+
+/* уровни */
+.route{display:flex;flex-direction:column;gap:0;margin:16px 0 8px;padding:0;list-style:none}
+.step{position:relative;display:flex;gap:16px;align-items:center;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--panel);margin-bottom:22px}
+.step:not(:last-child)::after{content:"";position:absolute;left:47px;top:100%;height:22px;width:2px;background:var(--line2)}
+.step svg{width:64px;height:64px;flex:none}
+.step h3 .tag{margin-left:6px}
+.step p{color:var(--dim);font-size:.95rem}
+.step.cur{border-color:var(--gold);background:linear-gradient(180deg,#2a2460,var(--panel))}
+.step.next{opacity:.78}
+.ach{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.ach .a{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.ach .a.on{border-color:#ffc97199;background:linear-gradient(180deg,#3a3070,var(--panel))}
+.ach .a b{display:block}
+.ach .a span{display:block;font-size:.9rem;color:var(--dim);margin:2px 0 8px}
+.ach .a em{font-style:normal;font-size:.8rem;font-weight:600;color:var(--dim)}
+.ach .a.on em{color:var(--ok)}
+
+/* чат */
+.chat{display:flex;flex-direction:column;height:calc(100vh - 48px);height:calc(100dvh - 48px);min-height:420px}
+.chat-head{display:flex;align-items:center;gap:12px;padding:0 4px 14px}
+.chat-head h1{font-size:1.3rem}
+.tools{display:flex;flex-wrap:wrap;gap:8px;padding:0 0 12px}
+.sel{flex:1 1 160px;min-width:0;text-overflow:ellipsis}
+.sel option{background:var(--panel);color:var(--ink)}
+.log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--line);border-radius:18px 18px 0 0;background:#0a1030cc;overscroll-behavior:contain}
+.row{display:flex;gap:10px;align-items:flex-end}
+.row.u{justify-content:flex-end}
+.m{max-width:min(560px,86%);padding:10px 14px;border-radius:16px;overflow-wrap:anywhere;white-space:pre-wrap}
+.m.u{background:linear-gradient(135deg,var(--violet2),var(--violet));color:#fff;border-bottom-right-radius:6px}
+.m.a{background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:6px;white-space:normal}
+.m.a>*+*{margin-top:8px}
+.fix,.ex,.you,.why{display:block;padding:8px 12px;border-radius:0 10px 10px 0}
+.fix{border-left:3px solid var(--gold);background:#ffc97114}
+.ex{border-left:3px solid var(--cyan);background:#5ad1ff12}
+.you{border-left:3px solid var(--danger);background:#ff9aa812}
+.why{border-left:3px solid var(--violet);background:#8b7cff1a}
+.fix .lb,.ex .lb,.you .lb,.why .lb{display:block;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.fix .lb{color:var(--gold)}
+.ex .lb{color:var(--cyan)}
+.you .lb{color:var(--danger)}
+.why .lb{color:#b7adff}
+.m.err{background:#3a1a2e;border:1px solid var(--danger);display:flex;flex-direction:column;align-items:flex-start;gap:10px;white-space:normal}
+.m.err .btn{min-height:40px;padding:8px 16px}
+.dots{display:inline-flex;gap:5px;align-items:center;height:22px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--dim);animation:bounce 1.2s infinite ease-in-out}
+.dots i:nth-child(2){animation-delay:.15s}
+.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+.composer{display:flex;gap:10px;align-items:flex-end;padding:12px;border:1px solid var(--line);border-top:0;border-radius:0 0 18px 18px;background:var(--panel)}
+textarea{flex:1;min-width:0;min-height:48px;max-height:140px;resize:none;font:inherit;color:inherit;background:#0a1030;border:1px solid var(--line2);border-radius:12px;padding:11px 14px}
+textarea::placeholder{color:#8591c4}
+textarea:focus{border-color:var(--gold)}
+.composer .btn{min-width:48px;padding:12px 16px}
+.composer .ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hint{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 4px 0;font-size:.875rem;color:var(--dim)}
+
+/* адаптивность */
+@media (max-width:899px){
+  .app{display:block}
+  .side{position:sticky;top:0;z-index:10;height:auto;padding:10px 12px 0;gap:8px;border-right:0;border-bottom:1px solid var(--line);background:#0a0f26f5}
+  #navlist{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #navlist::-webkit-scrollbar{display:none}
+  #navlist li{flex:none}
+  #navlist a{padding:9px 14px;border-radius:999px;white-space:nowrap;border-color:var(--line)}
+  #navlist a[aria-current="page"]{box-shadow:none;border-color:var(--gold)}
+  #navlist a svg,.soon{display:none}
+  .mini{display:none}
+  main{padding:16px 14px 28px}
+  .chat{height:calc(100vh - 150px);height:calc(100dvh - 150px)}
+  .chat-head .small{display:none}
+}
+@media (max-width:640px){
+  h1{font-size:1.45rem}
+  .hero{grid-template-columns:1fr;text-align:left}
+  .hero-planet{order:-1;width:120px;height:120px;margin-left:10px}
+  .hero-planet::before{left:-18px;right:-18px;height:44px}
+  .stats,.grid2,.grid3{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .stat{padding:12px}
+  .stat b{font-size:1.5rem}
+  .tile{min-height:0}
+  .composer .txt{display:none}
+  .m{max-width:90%}
+}
+@media (min-width:900px){ .composer .txt{display:inline} }
+@media (max-width:420px){ .stats{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+  .dots i{opacity:.8}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main" data-i="skip"></a>
+<div class="app focus" id="app">
+  <header class="side">
+    <div class="side-top">
+      <a class="brand" href="#home"><span class="ava" aria-hidden="true"></span><span>Abai AI</span></a>
+      <button id="lng" type="button"></button>
+      <button id="syncBtn" type="button" title="Код восстановления">☁</button>
+    </div>
+    <nav id="nav" aria-label="Навигация"><ul id="navlist"></ul></nav>
+    <a class="mini" id="mini" href="#level"></a>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section id="v-test" class="view hide" data-view="test" aria-labelledby="tTitle">
+      <h1 id="tTitle" data-i="tTitle"></h1>
+      <p class="dim" data-i="tSub" style="margin:6px 0 16px"></p>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="10" id="progBar"><i id="prog" style="width:0"></i></div>
+      <div class="card" style="margin-top:16px">
+        <p class="small dim" id="qnum"></p>
+        <p class="q" id="qtext"></p>
+        <div id="opts"></div>
+      </div>
+    </section>
+
+    <section id="v-result" class="view hide" data-view="result" aria-labelledby="rTitle">
+      <div class="card center">
+        <h1 id="rTitle" data-i="rTitle"></h1>
+        <div class="bigplanet" id="bigPlanet"></div>
+        <p id="lvlText"></p>
+        <p class="dim small" data-i="lvNote" style="margin:8px 0 0"></p>
+        <p class="dim small" data-i="privacy" style="margin:8px 0 16px"></p>
+        <button class="btn" id="start" type="button" data-i="start"></button>
+      </div>
+    </section>
+
+    <section id="v-home" class="view hide" data-view="home" aria-labelledby="homeH"></section>
+
+    <section id="v-chat" class="view hide" data-view="chat" aria-labelledby="chatH">
+      <div class="chat">
+        <div class="chat-head">
+          <span class="ava" aria-hidden="true"></span>
+          <div><h1 id="chatH" data-i="n_chat"></h1><p class="dim small" data-i="chatSub"></p></div>
+        </div>
+        <div class="tools">
+          <select id="selMode" class="sel"></select>
+          <select id="selSub" class="sel hide"></select>
+          <select id="selLvl" class="sel"></select>
+        </div>
+        <div id="log" class="log" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <form id="f" class="composer" autocomplete="off">
+          <label class="sr" for="inp" data-i="inpLabel"></label>
+          <textarea id="inp" rows="1" maxlength="500" enterkeyhint="send" placeholder="Write in English…"></textarea>
+          <button class="btn" id="send" type="submit" aria-label="Отправить">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <span class="txt" data-i="send"></span>
+          </button>
+        </form>
+        <div class="hint"><span data-i="privacy"></span><span id="left"></span></div>
+      </div>
+    </section>
+
+    <section id="v-lessons" class="view hide" data-view="lessons" aria-labelledby="h-lessons"></section>
+    <section id="v-vocab" class="view hide" data-view="vocab" aria-labelledby="h-vocab"></section>
+    <section id="v-grammar" class="view hide" data-view="grammar" aria-labelledby="h-grammar"></section>
+    <section id="v-practice" class="view hide" data-view="practice" aria-labelledby="h-practice"></section>
+    <section id="v-level" class="view hide" data-view="level" aria-labelledby="h-level"></section>
+  </main>
+</div>
+
+<script>
+// Серверные функции Vercel (папка api/). Сайт и API на одном домене, поэтому адрес относительный.
+const PROXY_URL = "/api/chat";
+const SYNC_URL = "/api/sync";
+// Только подсказка ученику. Настоящий лимит считает сервер (сервер), localStorage его не защищает.
+const DAILY_LIMIT = 30;
+const TIMEOUT_MS = 25000;
+
+const T = {
+ ru:{
+  skip:"К содержимому",navLabel:"Основная навигация",soon:"скоро",
+  n_home:"Главная",n_chat:"Учитель Абай",n_lessons:"Уроки",n_vocab:"Словарь",n_grammar:"Грамматика",n_practice:"Практика",n_level:"Мой уровень",
+  tTitle:"Проверим, как далеко ты улетишь",tSub:"10 коротких вопросов. Не знаешь, угадывай, это нормально.",qOf:(a,b)=>`Вопрос ${a} из ${b}`,
+  rTitle:"Твоя планета",res:(n,c)=>`${n} из 10 верно. Ты на планете: ${c}.`,privacy:"В чате не пиши фамилию, телефон и адрес.",start:"К панели ученика",
+  gMorn:"Доброе утро",gDay:"Добрый день",gEve:"Добрый вечер",
+  heroH:"Я Абай, твой учитель английского.",heroP:"Пиши мне по-английски, а я подскажу, как сказать лучше.",heroCta:"Поговорить с Абаем",
+  lvLabel:"Твой уровень",barLabel:"Результат теста",barVal:s=>`${s} из 10`,
+  next2:(n,p)=>`До планеты «${p}» осталось баллов в тесте: ${n}.`,top:"Ты на самой дальней планете маршрута.",
+  stStreak:"Серия, дней",stToday:"Сообщений сегодня",stTotal:"Всего сообщений",stNote:"Считается только в этом браузере.",
+  taskTitle:"Задание дня",taskGo:"Начать задание",taskHint:"Откроется чат с началом фразы. Продолжи её.",
+  contTitle:"Продолжить",contEmpty:"В этой сессии ты ещё не писал Абаю.",contHas:n=>`Сообщений в этой сессии: ${n}. Вернись к разговору.`,contBtn:"Открыть чат",contStart:"Начать разговор",
+  qTitle:"Быстрый переход",qChat:"Разговорная практика",qChatD:"Пиши и получай исправления",qVocabD:"Слова из твоих разговоров",qGramD:"Короткие правила с примерами",
+  soonTag:"Скоро",soonNow:"Раздел ещё в разработке. Практиковаться можно уже сейчас:",
+  soonP:{lessons:"Здесь появятся уроки по твоему уровню: тема, объяснение и задания.",vocab:"Здесь будут слова из твоих разговоров с переводом и примерами.",grammar:"Короткие правила с примерами и мини-упражнениями.",practice:"Упражнения для закрепления: выбор ответа, пропуски в предложениях."},
+  chatSub:"Пиши по-английски. Если ошибёшься, Абай покажет, как лучше.",inpLabel:"Твоё сообщение",send:"Отправить",sendAria:"Отправить сообщение",
+  youLabel:"Твой вариант",fixLabel:"Лучше сказать",whyLabel:"Объяснение",exLabel:"Дополнительный пример",retry:"Повторить",typing:"Абай печатает…",
+  lvNote:"Это примерная оценка по короткому тесту. Уровень можно поменять в чате.",
+  modeAria:"Режим урока",subAria:"Тема режима",lvAria:"Уровень английского в чате",lvAuto:l=>`Уровень: авто (${l})`,lvPick:l=>`Уровень: ${l}`,
+  modes:{free:"Свободный разговор",topic:"Разговор по теме",role:"Ролевая ситуация",grammar:"Грамматика",vocab:"Словарь",exam:"Подготовка к экзамену",mistakes:"Типичные ошибки"},
+  subs:{topic:{hobbies:"Хобби",food:"Еда",school:"Школа",travel:"Путешествия",tech:"Технологии",kz:"Казахстан"},role:{cafe:"Кафе",travel:"Аэропорт",school:"Школа",shop:"Магазин",interview:"Собеседование"},exam:{ielts:"Стиль IELTS",school:"Школьные задания"}},
+  left:n=>`Осталось сообщений сегодня: ${n}`,limit:"Лимит на сегодня закончился. Come back tomorrow!",
+  err:"Не удалось связаться с учителем. Попробуй ещё раз.",errRate:"Слишком много сообщений подряд. Подожди минуту.",errBusy:"Учитель сейчас занят. Попробуй через минуту.",
+  lvTitle:"Мой уровень",lvSub:"Маршрут по планетам: чем лучше английский, тем дальше летишь.",here:"Ты здесь",done:"Пройдено",next:"Впереди",
+  scoreLine:s=>`Результат последнего теста: ${s} из 10.`,retake:"Пройти тест заново",retakeNote:"Результат обновится после теста.",
+  achTitle:"Достижения",achNote:"Данные хранятся только в этом браузере.",got:"Получено",locked:"Ещё не получено",
+  ach:[["Первый полёт","Пройден тест уровня"],["Первое слово","Отправлено первое сообщение Абаю"],["Разговорчивый","20 сообщений Абаю"],["Серия 3 дня","Занятия 3 дня подряд"],["Дальний рейс","Достигнут уровень B1"]]
+ },
+ kk:{
+  skip:"Мазмұнға өту",navLabel:"Негізгі навигация",soon:"жақында",
+  n_home:"Басты бет",n_chat:"Ұстаз Абай",n_lessons:"Сабақтар",n_vocab:"Сөздік",n_grammar:"Грамматика",n_practice:"Практика",n_level:"Менің деңгейім",
+  tTitle:"Қаншалықты алысқа ұшатыныңды тексерейік",tSub:"10 қысқа сұрақ. Білмесең, жорамалда, ештеңе етпейді.",qOf:(a,b)=>`${b} сұрақтың ${a}-і`,
+  rTitle:"Сенің планетаң",res:(n,c)=>`10-нан ${n} дұрыс. Сен мына планетадасың: ${c}.`,privacy:"Чатқа тегіңді, телефоныңды және мекенжайыңды жазба.",start:"Оқушы панеліне",
+  gMorn:"Қайырлы таң",gDay:"Қайырлы күн",gEve:"Қайырлы кеш",
+  heroH:"Мен Абаймын, сенің ағылшын тілі ұстазыңмын.",heroP:"Маған ағылшынша жаз, мен қалай дұрыс айту керегін айтып тұрамын.",heroCta:"Абаймен сөйлесу",
+  lvLabel:"Сенің деңгейің",barLabel:"Тест нәтижесі",barVal:s=>`10-нан ${s}`,
+  next2:(n,p)=>`«${p}» планетасына дейін тестте ${n} балл қалды.`,top:"Сен маршруттағы ең алыс планетадасың.",
+  stStreak:"Қатарынан, күн",stToday:"Бүгінгі хабарлама",stTotal:"Барлық хабарлама",stNote:"Тек осы браузерде есептеледі.",
+  taskTitle:"Күннің тапсырмасы",taskGo:"Тапсырманы бастау",taskHint:"Сөйлемнің басы жазылған чат ашылады. Жалғастыр.",
+  contTitle:"Жалғастыру",contEmpty:"Бұл сессияда Абайға әлі жазбадың.",contHas:n=>`Осы сессиядағы хабарлама: ${n}. Әңгімеге оралу.`,contBtn:"Чатты ашу",contStart:"Әңгімені бастау",
+  qTitle:"Жылдам өту",qChat:"Сөйлесу практикасы",qChatD:"Жаз да, түзетулер ал",qVocabD:"Әңгімелеріңдегі сөздер",qGramD:"Мысалмен қысқа ережелер",
+  soonTag:"Жақында",soonNow:"Бөлім әзірленуде. Қазір-ақ жаттығуға болады:",
+  soonP:{lessons:"Мұнда деңгейіңе сай сабақтар шығады: тақырып, түсіндірме және тапсырмалар.",vocab:"Мұнда әңгімелеріңдегі сөздер аудармасымен және мысалдарымен болады.",grammar:"Мысалдары мен шағын жаттығулары бар қысқа ережелер.",practice:"Бекітуге арналған жаттығулар: жауап таңдау, сөйлемдегі бос орындар."},
+  chatSub:"Ағылшынша жаз. Қателессең, Абай қалай дұрыс екенін көрсетеді.",inpLabel:"Сенің хабарламаң",send:"Жіберу",sendAria:"Хабарламаны жіберу",
+  youLabel:"Сенің нұсқаң",fixLabel:"Дұрысы",whyLabel:"Түсіндірме",exLabel:"Қосымша мысал",retry:"Қайталау",typing:"Абай жазып жатыр…",
+  lvNote:"Бұл қысқа тест бойынша шамамен алынған баға. Деңгейді чатта өзгертуге болады.",
+  modeAria:"Сабақ режимі",subAria:"Режим тақырыбы",lvAria:"Чаттағы ағылшын деңгейі",lvAuto:l=>`Деңгей: авто (${l})`,lvPick:l=>`Деңгей: ${l}`,
+  modes:{free:"Еркін сөйлесу",topic:"Тақырып бойынша",role:"Рөлдік жағдаят",grammar:"Грамматика",vocab:"Сөздік",exam:"Емтиханға дайындық",mistakes:"Типтік қателер"},
+  subs:{topic:{hobbies:"Хобби",food:"Тамақ",school:"Мектеп",travel:"Саяхат",tech:"Технология",kz:"Қазақстан"},role:{cafe:"Кафе",travel:"Әуежай",school:"Мектеп",shop:"Дүкен",interview:"Сұхбат"},exam:{ielts:"IELTS стилі",school:"Мектеп тапсырмалары"}},
+  left:n=>`Бүгін қалған хабарлама: ${n}`,limit:"Бүгінгі лимит бітті. Come back tomorrow!",
+  err:"Мұғалімге қосыла алмады. Қайтадан көр.",errRate:"Қатарынан тым көп хабарлама. Бір минут күтіп көр.",errBusy:"Мұғалім қазір бос емес. Бір минуттан кейін қайталап көр.",
+  lvTitle:"Менің деңгейім",lvSub:"Планеталар бойынша маршрут: ағылшын тілің жақсарған сайын, алысқа ұшасың.",here:"Сен осындасың",done:"Өтілді",next:"Алда",
+  scoreLine:s=>`Соңғы тест нәтижесі: 10-нан ${s}.`,retake:"Тестті қайта тапсыру",retakeNote:"Нәтиже тесттен кейін жаңарады.",
+  achTitle:"Жетістіктер",achNote:"Деректер тек осы браузерде сақталады.",got:"Алынды",locked:"Әлі алынған жоқ",
+  ach:[["Алғашқы ұшу","Деңгей тесті тапсырылды"],["Алғашқы сөз","Абайға алғашқы хабарлама жіберілді"],["Көп сөйлейтін","Абайға 20 хабарлама"],["3 күндік қатар","Қатарынан 3 күн оқу"],["Алыс рейс","B1 деңгейіне жетті"]]
+ }
+};
+const LV = ["A1","A2","B1","B2"];
+const NAME = {ru:["Луна","Марс","Юпитер","Галактика"], kk:["Ай","Марс","Юпитер","Галактика"]};
+const DESC = {
+ ru:["Первые шаги: простые фразы о себе.","Короткие диалоги о повседневных делах.","Свободнее общаешься, говоришь о планах и мнении.","Сложные темы, нюансы, уверенная речь."],
+ kk:["Алғашқы қадам: өзің туралы қарапайым сөйлемдер.","Күнделікті істер туралы қысқа диалогтар.","Еркін сөйлеп, жоспарың мен пікірің айта аласың.","Күрделі тақырыптар, нәзік мағыналар, сенімді сөйлеу."]
+};
+const BANDS = [[0,2],[3,5],[6,8],[9,10]];
+const TASKS = {
+ A1:[["Расскажи Абаю о своей любимой еде.","Абайға сүйікті тамағың туралы айт.","My favourite food is"],
+     ["Опиши свою семью тремя предложениями.","Отбасыңды үш сөйлеммен сипатта.","In my family there are"],
+     ["Расскажи, что ты любишь делать после школы.","Мектептен кейін не істегенді ұнататыныңды айт.","After school I like to"]],
+ A2:[["Расскажи, что ты делал вчера.","Кеше не істегеніңді айт.","Yesterday I"],
+     ["Опиши свой любимый город или село.","Сүйікті қаланды немесе ауылыңды сипатта.","I like my town because"],
+     ["Расскажи о своих планах на выходные.","Демалыс күндеріндегі жоспарың туралы айт.","At the weekend I'm going to"]],
+ B1:[["Объясни, какой школьный предмет тебе нравится больше всего и почему.","Қай пән ең көп ұнайтынын және неге екенін түсіндір.","My favourite subject is"],
+     ["Расскажи о поездке, которую ты запомнил.","Есте қалған сапарың туралы айт.","I'll never forget the trip when"],
+     ["Выскажи мнение: нужен ли телефон на уроке?","Пікір айт: сабақта телефон керек пе?","In my opinion, phones in class are"]],
+ B2:[["Обсуди плюсы и минусы изучения языков онлайн.","Онлайн тіл үйренудің артықшылықтары мен кемшіліктерін талқыла.","Learning languages online has both advantages and"],
+     ["Как технологии изменят школу через десять лет?","Технология он жылдан кейін мектепті қалай өзгертеді?","In ten years, schools will probably"],
+     ["Расскажи о цели, к которой ты идёшь, и что мешает.","Қол жеткізгің келетін мақсатың және оған не кедергі екені туралы айт.","One goal I am working towards is"]]
+};
+const Q = [
+ ["She ___ a student.",["am","is","are"],1],
+ ["I ___ breakfast every day.",["have","has","am having"],0],
+ ["Yesterday we ___ to the park.",["go","went","gone"],1],
+ ["There aren't ___ apples.",["some","any","a"],1],
+ ["He is taller ___ me.",["than","then","that"],0],
+ ["If it rains, we ___ at home.",["stay","will stay","would stay"],1],
+ ["I have lived here ___ 2019.",["for","since","from"],1],
+ ["This school ___ in 1990.",["built","was built","is building"],1],
+ ["If I ___ more time, I would learn Chinese.",["have","had","would have"],1],
+ ["She suggested ___ the meeting.",["to postpone","postponing","postpone"],1]
+];
+const VIEWS = ["home","chat","lessons","vocab","grammar","practice","level"];
+const SOON = ["lessons","vocab","grammar","practice"];
+const ICON = {
+ home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+ lessons:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 1 2-2h13"/>',
+ vocab:'<path d="M5 4h14v16H5zM9 9h6M9 13h6"/>',
+ grammar:'<path d="M3 19L8 5l5 14M5 14h6M16 10h5M16 15h5"/>',
+ practice:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',
+ level:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>'
+};
+const svgI = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+};
+
+/* ---------- облачное сохранение прогресса (без входа: анонимный код устройства) ---------- */
+const SYNC_KEYS = ["lang","level","score","mode","sub","mlevel","days","best","total"];
+const rawSet = store.set;
+let userId = store.get("uid");
+if (!userId){ userId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(36).slice(2) + "-abai-device"); rawSet("uid", userId); }
+let syncTimer;
+function pushSync(){
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    const data = {};
+    SYNC_KEYS.forEach(k => { const v = store.get(k); if (v !== null) data[k] = v; });
+    fetch(SYNC_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({id: userId, action:"put", data})}).catch(() => {});
+  }, 2000);
+}
+store.set = (k, v) => { rawSet(k, v); if (SYNC_KEYS.includes(k)) pushSync(); };
+// Новое устройство без прогресса: ничего не подтягиваем сами, только по коду (кнопка ☁).
+$("syncBtn").onclick = async () => {
+  const code = prompt("Твой код восстановления. Сохрани его.\nЧтобы перенести прогресс сюда с другого устройства, замени код на тот, что на другом устройстве:", userId);
+  if (!code || code.trim() === userId) return;
+  try{
+    const r = await fetch(SYNC_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({id: code.trim(), action:"get"})});
+    const d = await r.json();
+    if (!d || !d.data) return alert("Код не найден");
+    Object.entries(d.data).forEach(([k, v]) => rawSet(k, v));
+    rawSet("uid", code.trim());
+    location.reload();
+  }catch(e){ alert("Не удалось подключиться. Попробуй позже."); }
+};
+
+const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const shuffle = a => { a = a.slice(); for (let k = a.length - 1; k > 0; k--){ const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
+const num = k => Math.max(0, parseInt(store.get(k), 10) || 0);
+const dkey = (d = new Date()) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+
+let lang = store.get("lang") === "kk" ? "kk" : "ru";
+let level = LV.includes(store.get("level")) ? store.get("level") : null;
+let score = Math.min(10, num("score"));
+let i = 0, history = [], uid = 0, busy = false, epoch = 0, current = null, errRow = null;
+
+/* режимы чата: ключи совпадают с MODES / TOPICS / ROLES / EXAMS в worker.js */
+const MODE_KEYS = ["free","topic","role","grammar","vocab","exam","mistakes"];
+const SUBS = {topic:["hobbies","food","school","travel","tech","kz"], role:["cafe","travel","school","shop","interview"], exam:["ielts","school"]};
+const LEVELS_ALL = ["A1","A2","B1","B2","C1","C2"];
+// Первая реплика Абая. Она попадает в историю, чтобы Gemini знал, о чём спросил учитель (важно для ролей и школьных заданий).
+const OPEN = {
+  free:"Hi! I'm Abai, your English teacher. Let's chat. What did you do today?",
+  topic:{hobbies:"Let's talk about hobbies. What do you like to do in your free time?",food:"Let's talk about food. What is your favourite dish?",school:"Let's talk about school. What did you do at school today?",travel:"Let's talk about travel. Where would you like to go on holiday?",tech:"Let's talk about technology. How often do you use the internet?",kz:"Let's talk about Kazakhstan. Which city or place do you like most?"},
+  role:{cafe:"Hello! Welcome to our cafe. What would you like to order?",travel:"Good morning! Where are you flying today?",school:"Hi! I'm your new classmate. What's your favourite subject?",shop:"Hello! Can I help you?",interview:"Hello! Nice to meet you. Why do you want this job?"},
+  grammar:"Let's practise grammar. Write a sentence in English, or name a grammar topic, for example Past Simple.",
+  vocab:"Let's learn new words. Tell me a topic, for example travel or food, and I'll give you 5 useful words.",
+  exam:{ielts:"Let's practise speaking. First question: where are you from?",school:"Item 1. She ___ to school every day. A) go B) goes C) going. Which one is correct?"},
+  mistakes:"Write a few English sentences. I'll find the typical mistakes and explain them."
+};
+let mode = MODE_KEYS.includes(store.get("mode")) ? store.get("mode") : "free";
+let sub = SUBS[mode] ? (SUBS[mode].includes(store.get("sub")) ? store.get("sub") : SUBS[mode][0]) : null;
+let mlevel = LEVELS_ALL.includes(store.get("mlevel")) ? store.get("mlevel") : null; // ручной выбор уровня; null = по тесту
+const chatLevel = () => mlevel || level;
+const userCount = () => history.filter(m => m.role === "user").length;
+const t = k => T[lang][k];
+const idx = () => LV.indexOf(level);
+
+/* данные занятий: считаются только из реальных действий в этом браузере */
+function days(){
+  try{ const a = JSON.parse(store.get("days") || "[]"); return Array.isArray(a) ? a.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)) : []; }
+  catch(e){ return []; }
+}
+function streak(){
+  const s = new Set(days()); const d = new Date();
+  if (!s.has(dkey(d))) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (s.has(dkey(d))){ n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function markDay(){
+  const a = days(), k = dkey();
+  if (!a.includes(k)){ a.push(k); store.set("days", JSON.stringify(a.slice(-90))); }
+  store.set("best", String(Math.max(num("best"), streak())));
+}
+function left(){
+  const d = dkey();
+  if (store.get("day") !== d){ store.set("day", d); store.set("used", "0"); }
+  return Math.max(0, DAILY_LIMIT - num("used"));
+}
+
+/* планеты */
+function planet(n){
+  const g = "g" + (++uid);
+  const defs = [
+   `<radialGradient id="${g}" cx=".35" cy=".3"><stop offset="0" stop-color="#eef0f8"/><stop offset="1" stop-color="#7d839c"/></radialGradient>`,
+   `<radialGradient id="${g}" cx=".35" cy=".3"><stop offset="0" stop-color="#ff9d6e"/><stop offset="1" stop-color="#9c321a"/></radialGradient>`,
+   `<radialGradient id="${g}" cx=".35" cy=".3"><stop offset="0" stop-color="#f0dcc0"/><stop offset="1" stop-color="#b27c52"/></radialGradient><clipPath id="${g}c"><circle cx="32" cy="32" r="28"/></clipPath>`,
+   `<radialGradient id="${g}" cx=".5" cy=".5"><stop offset="0" stop-color="#e6d4ff"/><stop offset=".45" stop-color="#8b5cf6"/><stop offset="1" stop-color="#1d1252"/></radialGradient>`
+  ][n];
+  const body = [
+   `<circle cx="32" cy="32" r="28" fill="url(#${g})"/><circle cx="22" cy="24" r="5" fill="#000" opacity=".15"/><circle cx="41" cy="38" r="7" fill="#000" opacity=".13"/><circle cx="28" cy="44" r="3" fill="#000" opacity=".15"/>`,
+   `<circle cx="32" cy="32" r="28" fill="url(#${g})"/><ellipse cx="32" cy="7" rx="9" ry="3" fill="#fff" opacity=".85"/><path d="M14 36q10-8 18 0t18-2" stroke="#5a1a0c" stroke-width="3" fill="none" opacity=".35"/>`,
+   `<circle cx="32" cy="32" r="28" fill="url(#${g})"/><g clip-path="url(#${g}c)"><rect y="16" width="64" height="5" fill="#a56b45" opacity=".7"/><rect y="27" width="64" height="7" fill="#f6e6cc" opacity=".7"/><rect y="40" width="64" height="5" fill="#9a6040" opacity=".7"/><ellipse cx="42" cy="37" rx="6" ry="3" fill="#c4553a"/></g>`,
+   `<circle cx="32" cy="32" r="29" fill="url(#${g})"/><path d="M32 32c8-2 14 4 12 12M32 32c-8 2-14-4-12-12" stroke="#fff" stroke-width="2" fill="none" opacity=".7"/><circle cx="14" cy="14" r="1.2" fill="#fff"/><circle cx="52" cy="48" r="1.2" fill="#fff"/><circle cx="50" cy="16" r="1" fill="#fff"/>`
+  ][n];
+  return `<svg viewBox="0 0 64 64" aria-hidden="true"><defs>${defs}</defs>${body}</svg>`;
+}
+
+/* навигация и экраны */
+function renderNav(){
+  $("nav").setAttribute("aria-label", t("navLabel"));
+  $("navlist").innerHTML = VIEWS.map(v =>
+    `<li><a href="#${v}" ${v === current ? 'aria-current="page"' : ""}>${svgI(v)}<span>${t("n_" + v)}</span>${SOON.includes(v) ? `<em class="soon">${t("soon")}</em>` : ""}</a></li>`
+  ).join("");
+  const cur = $("navlist").querySelector("[aria-current]");
+  if (cur && cur.scrollIntoView) cur.scrollIntoView({inline:"center", block:"nearest"});
+  if (level){
+    $("mini").innerHTML = `${planet(idx())}<div><b>${level} · ${NAME[lang][idx()]}</b><span>${t("n_level")}</span></div>`;
+  }
+}
+function show(id){
+  current = id;
+  document.querySelectorAll("[data-view]").forEach(s => s.classList.toggle("hide", s.dataset.view !== id));
+  $("app").classList.toggle("focus", id === "test" || id === "result");
+  document.title = (VIEWS.includes(id) ? t("n_" + id) + " · " : "") + "Abai AI";
+  if (VIEWS.includes(id)) renderNav();
+  if (id === "chat"){
+    if (!$("log").children.length) openChat();
+    renderTools(); toEnd(true);
+  } else window.scrollTo(0, 0);
+}
+function route(){
+  if (!level) return;
+  const v = location.hash.slice(1);
+  if (VIEWS.includes(v)) show(v); else if (!current || !VIEWS.includes(current)) show("home");
+}
+function go(v){ if (location.hash === "#" + v) route(); else location.hash = v; }
+window.addEventListener("hashchange", route);
+
+/* тексты и перерисовка */
+function applyLang(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i]").forEach(e => e.textContent = t(e.dataset.i));
+  $("send").setAttribute("aria-label", t("sendAria"));
+  $("lng").textContent = lang === "ru" ? "ҚАЗ" : "РУС";
+  $("lng").setAttribute("aria-label", lang === "ru" ? "Тілді қазақшаға ауыстыру" : "Переключить на русский");
+  if (level){
+    $("bigPlanet").innerHTML = planet(idx());
+    $("lvlText").textContent = t("res")(score, NAME[lang][idx()]);
+    renderHome(); renderLevel(); SOON.forEach(renderSoon); renderTools();
+    $("left").textContent = t("left")(left());
+    if (VIEWS.includes(current)){ renderNav(); document.title = t("n_" + current) + " · Abai AI"; }
+  }
+  if (current === "test") askQ(true);
+}
+
+function renderHome(){
+  const L = idx(), h = new Date().getHours();
+  const greet = h < 12 ? t("gMorn") : h < 18 ? t("gDay") : t("gEve");
+  const nextTxt = L < 3 ? t("next2")(BANDS[L][1] + 1 - score, NAME[lang][L + 1]) : t("top");
+  const d = new Date(), dayN = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5);
+  const task = TASKS[level][dayN % 3];
+  const used = DAILY_LIMIT - left();
+  const hasChat = userCount() > 0;
+  $("v-home").innerHTML = `
+  <section class="card hero" aria-label="${t("lvLabel")}">
+    <div>
+      <p class="eyebrow">${t("lvLabel")}: ${level} · ${NAME[lang][L]}</p>
+      <h1 id="homeH">${greet}! ${t("heroH")}</h1>
+      <p class="dim">${t("heroP")}</p>
+      <div class="prog">
+        <div class="barrow"><span>${t("barLabel")}</span><span>${t("barVal")(score)}</span></div>
+        <div class="bar" role="progressbar" aria-label="${t("barLabel")}" aria-valuemin="0" aria-valuemax="10" aria-valuenow="${score}"><i style="width:${score * 10}%"></i></div>
+      </div>
+      <p class="small dim">${nextTxt}</p>
+      <button class="btn" type="button" data-go="chat">${t("heroCta")}</button>
+    </div>
+    <div class="hero-planet">${planet(L)}</div>
+  </section>
+
+  <div class="stats" role="list">
+    <div class="card stat" role="listitem"><b>${streak()}</b><span>${t("stStreak")}</span></div>
+    <div class="card stat" role="listitem"><b>${used}</b><span>${t("stToday")}</span></div>
+    <div class="card stat" role="listitem"><b>${num("total")}</b><span>${t("stTotal")}</span></div>
+  </div>
+  <p class="small dim" style="margin:-4px 0 16px">${t("stNote")}</p>
+
+  <div class="grid2">
+    <section class="card task" aria-labelledby="taskH">
+      <p class="eyebrow">${t("taskTitle")}</p>
+      <h2 id="taskH" style="margin-top:4px">${task[lang === "ru" ? 0 : 1]}</h2>
+      <blockquote lang="en">${task[2]}…</blockquote>
+      <p class="small dim" style="margin-bottom:14px">${t("taskHint")}</p>
+      <button class="btn" type="button" data-task="${task[2]}">${t("taskGo")}</button>
+    </section>
+    <section class="card" aria-labelledby="contH">
+      <p class="eyebrow">${t("contTitle")}</p>
+      <h2 id="contH" style="margin-top:4px">${t("n_chat")}</h2>
+      <p class="dim" style="margin:8px 0 14px">${hasChat ? t("contHas")(userCount()) : t("contEmpty")}</p>
+      <button class="btn ghost" type="button" data-go="chat">${hasChat ? t("contBtn") : t("contStart")}</button>
+    </section>
+  </div>
+
+  <h2 class="sect">${t("qTitle")}</h2>
+  <div class="grid3">
+    <button class="tile" type="button" data-go="chat">${svgI("chat")}<b>${t("qChat")}</b><span>${t("qChatD")}</span></button>
+    <div class="tile is-soon">${svgI("vocab")}<b>${t("n_vocab")}</b><span>${t("qVocabD")}</span><em class="tag">${t("soonTag")}</em></div>
+    <div class="tile is-soon">${svgI("grammar")}<b>${t("n_grammar")}</b><span>${t("qGramD")}</span><em class="tag">${t("soonTag")}</em></div>
+  </div>`;
+}
+function renderSoon(v){
+  $("v-" + v).innerHTML = `
+  <div class="card soonbox">
+    <div class="ic">${svgI(v)}</div>
+    <h1 id="h-${v}">${t("n_" + v)}</h1>
+    <p style="margin-top:8px"><span class="tag">${t("soonTag")}</span></p>
+    <p class="dim">${t("soonP")[v]}</p>
+    <p class="dim small">${t("soonNow")}</p>
+    <button class="btn" type="button" data-go="chat">${t("heroCta")}</button>
+  </div>`;
+}
+function renderLevel(){
+  const cur = idx();
+  const unlocked = [
+    !!level, num("total") >= 1, num("total") >= 20, Math.max(num("best"), streak()) >= 3, cur >= 2
+  ];
+  $("v-level").innerHTML = `
+  <h1 id="h-level">${t("lvTitle")}</h1>
+  <p class="dim" style="margin:6px 0 0">${t("lvSub")}</p>
+  <ol class="route">${LV.map((code, n) => {
+    const cls = n === cur ? "cur" : n > cur ? "next" : "";
+    const tag = n === cur ? t("here") : n < cur ? t("done") : t("next");
+    return `<li class="step ${cls}" ${n === cur ? 'aria-current="step"' : ""}>${planet(n)}<div><h3>${NAME[lang][n]} <span class="tag">${code} · ${tag}</span></h3><p>${DESC[lang][n]}</p></div></li>`;
+  }).join("")}</ol>
+  <div class="card" style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between">
+    <div><p>${t("scoreLine")(score)}</p><p class="small dim">${t("retakeNote")}</p></div>
+    <button class="btn ghost" type="button" data-act="retake">${t("retake")}</button>
+  </div>
+  <h2 class="sect">${t("achTitle")}</h2>
+  <div class="ach">${t("ach").map((a, n) => `<div class="a ${unlocked[n] ? "on" : ""}"><b>${a[0]}</b><span>${a[1]}</span><em>${unlocked[n] ? "✓ " + t("got") : t("locked")}</em></div>`).join("")}</div>
+  <p class="small dim" style="margin-top:12px">${t("achNote")}</p>`;
+}
+
+/* тест */
+function askQ(keep){
+  $("progBar").setAttribute("aria-valuenow", String(i));
+  $("prog").style.width = (i / Q.length * 100) + "%";
+  $("qnum").textContent = t("qOf")(i + 1, Q.length);
+  $("qtext").textContent = Q[i][0];
+  if (keep && $("opts").children.length) return;
+  $("opts").innerHTML = "";
+  shuffle(Q[i][1].map((txt, n) => ({txt, ok: n === Q[i][2]}))).forEach((o, n) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "opt";
+    const k = document.createElement("b"); k.textContent = "ABC"[n]; k.setAttribute("aria-hidden", "true");
+    const s = document.createElement("span"); s.textContent = o.txt; s.lang = "en";
+    b.append(k, s);
+    b.onclick = () => { if (o.ok) score++; ++i < Q.length ? askQ() : finish(); };
+    $("opts").appendChild(b);
+  });
+}
+function finish(){
+  level = score <= 2 ? "A1" : score <= 5 ? "A2" : score <= 8 ? "B1" : "B2";
+  store.set("level", level); store.set("score", String(score));
+  applyLang(); show("result");
+}
+function startTest(){ i = 0; score = 0; show("test"); askQ(); }
+
+/* чат */
+function opener(){ const o = OPEN[mode]; return typeof o === "string" ? o : o[sub]; }
+function openChat(){ const txt = opener(); addMsg("model", txt); history = [{role:"model", text:txt}]; }
+function resetChat(){ epoch++; setBusy(false); errRow = null; history = []; $("log").innerHTML = ""; openChat(); renderHome(); }
+function renderTools(){
+  const opt = (v, txt, on) => `<option value="${v}"${on ? " selected" : ""}>${txt}</option>`;
+  $("selMode").innerHTML = MODE_KEYS.map(k => opt(k, t("modes")[k], k === mode)).join("");
+  const sk = SUBS[mode];
+  $("selSub").classList.toggle("hide", !sk);
+  if (sk) $("selSub").innerHTML = sk.map(k => opt(k, t("subs")[mode][k], k === sub)).join("");
+  $("selLvl").innerHTML = opt("", t("lvAuto")(level || "A2"), !mlevel) + LEVELS_ALL.map(k => opt(k, t("lvPick")(k), k === mlevel)).join("");
+  $("selMode").setAttribute("aria-label", t("modeAria"));
+  $("selSub").setAttribute("aria-label", t("subAria"));
+  $("selLvl").setAttribute("aria-label", t("lvAria"));
+}
+function toEnd(instant){
+  const l = $("log");
+  l.scrollTo({top: l.scrollHeight, behavior: instant || reduceMotion() ? "auto" : "smooth"});
+}
+// Метки блока исправления берём из T (те же, что в LABELS в worker.js), плюс запасные английские.
+const LABEL_KIND = {better:"fix",correct:"fix",corrected:"fix",example:"ex","for example":"ex"};
+["ru","kk"].forEach(l => ["you","fix","why","ex"].forEach(k => { LABEL_KIND[T[l][k + "Label"].toLowerCase()] = k; }));
+function renderReply(b, text){
+  b.textContent = "";
+  text.split(/\n+/).forEach(raw => {
+    const line = raw.replace(/\*\*|__/g, "").trim();
+    if (!line) return;
+    const m = line.match(/^([^:\uFF1A]{2,30}?)\s*[:\uFF1A]\s*(.+)$/);
+    const kind = m && LABEL_KIND[m[1].trim().toLowerCase()];
+    if (kind){
+      const d = document.createElement("div"); d.className = kind;
+      const lb = document.createElement("span"); lb.className = "lb"; lb.textContent = t(kind + "Label");
+      const tx = document.createElement("span"); tx.lang = kind === "why" ? lang : "en"; tx.textContent = m[2];
+      d.append(lb, tx); b.appendChild(d);
+    } else {
+      const p = document.createElement("p"); p.textContent = line; b.appendChild(p);
+    }
+  });
+}
+function makeRow(role){
+  const r = document.createElement("div");
+  r.className = "row " + (role === "user" ? "u" : "a");
+  if (role !== "user"){ const a = document.createElement("span"); a.className = "ava"; a.setAttribute("aria-hidden", "true"); r.appendChild(a); }
+  const b = document.createElement("div");
+  b.className = "m " + (role === "user" ? "u" : "a");
+  r.appendChild(b); $("log").appendChild(r);
+  return {r, b};
+}
+function addMsg(role, text){
+  const {r, b} = makeRow(role);
+  if (role === "user") b.textContent = text; else renderReply(b, text);
+  toEnd(); return r;
+}
+function addTyping(){
+  const {r, b} = makeRow("model");
+  b.setAttribute("role", "status"); b.setAttribute("aria-label", t("typing"));
+  b.innerHTML = '<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="sr"></span>';
+  b.querySelector(".sr").textContent = t("typing");
+  toEnd(); return r;
+}
+function addError(msg, text){
+  const {r, b} = makeRow("model");
+  b.className = "m err"; b.setAttribute("role", "alert");
+  const p = document.createElement("span"); p.textContent = msg;
+  const btn = document.createElement("button"); btn.type = "button"; btn.className = "btn ghost"; btn.textContent = t("retry");
+  btn.onclick = () => { r.remove(); errRow = null; send(text); };
+  b.append(p, btn); errRow = r; toEnd();
+}
+function errText(status, code){
+  if (code === "daily_limit") return t("limit");
+  if (code === "rate_limited" || status === 429) return t("errRate");
+  if (code === "busy" || status === 503) return t("errBusy");
+  return t("err");
+}
+function setBusy(b){
+  busy = b; $("send").disabled = b; $("send").classList.toggle("loading", b);
+  $("log").setAttribute("aria-busy", String(b));
+}
+function autosize(){ const el = $("inp"); el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 140) + "px"; }
+
+async function send(retryText){
+  if (busy) return;
+  const isRetry = retryText !== undefined;
+  const text = isRetry ? retryText : $("inp").value.trim();
+  if (!text) return;
+  if (!isRetry){
+    if (left() <= 0){ addMsg("model", t("limit")); return; }
+    if (errRow){ errRow.remove(); errRow = null; }
+    // неудавшееся прошлое сообщение в историю не отправляем
+    if (history.length && history[history.length - 1].role === "user") history.pop();
+    addMsg("user", text); history.push({role:"user", text});
+    $("inp").value = ""; autosize();
+  }
+  const my = epoch;
+  setBusy(true);
+  const typing = addTyping();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  let reply = null, msg = null;
+  try {
+    if (PROXY_URL.includes("YOUR-WORKER")) throw new Error("PROXY_URL is not set");
+    const r = await fetch(PROXY_URL, {method:"POST", headers:{"Content-Type":"application/json"}, signal: ctrl.signal,
+      body: JSON.stringify({level: chatLevel(), src: mlevel ? "manual" : "test", lang, mode, sub, messages: history.slice(-12)})});
+    let data = null;
+    try { data = await r.json(); } catch(_) {}
+    if (!r.ok) msg = errText(r.status, data && data.error);
+    else if (data && typeof data.reply === "string" && data.reply) reply = data.reply;
+    else msg = t("err");
+  } catch(err){
+    msg = t("err");
+  } finally {
+    clearTimeout(timer);
+  }
+  if (my !== epoch) return; // пока шёл запрос, тест пройден заново
+  typing.remove(); setBusy(false);
+  if (reply !== null){
+    addMsg("model", reply); history.push({role:"model", text:reply});
+    if (history.length > 24) history = history.slice(-24);
+    store.set("used", String(num("used") + 1)); store.set("total", String(num("total") + 1));
+    markDay(); renderHome(); renderLevel();
+  } else {
+    addError(msg, text);
+  }
+  $("left").textContent = t("left")(left());
+}
+$("f").onsubmit = e => { e.preventDefault(); send(); };
+$("inp").addEventListener("input", autosize);
+$("inp").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); $("f").requestSubmit(); }
+});
+
+/* события */
+$("lng").onclick = () => { lang = lang === "ru" ? "kk" : "ru"; store.set("lang", lang); applyLang(); };
+$("main").addEventListener("click", e => {
+  const g = e.target.closest("[data-go]");
+  if (g){ go(g.dataset.go); return; }
+  const tk = e.target.closest("[data-task]");
+  if (tk){
+    $("inp").value = tk.dataset.task + " "; autosize(); go("chat");
+    $("inp").focus(); return;
+  }
+  if (e.target.closest("[data-act='retake']")){
+    epoch++; setBusy(false); errRow = null;
+    history = []; $("log").innerHTML = ""; startTest();
+  }
+});
+$("selMode").onchange = e => {
+  mode = e.target.value; sub = SUBS[mode] ? SUBS[mode][0] : null;
+  store.set("mode", mode); store.set("sub", sub || ""); renderTools(); resetChat();
+};
+$("selSub").onchange = e => { sub = e.target.value; store.set("sub", sub); resetChat(); };
+$("selLvl").onchange = e => { mlevel = e.target.value || null; store.set("mlevel", mlevel || ""); }; // диалог не сбрасываем
+$("start").onclick = () => go("home");
+
+applyLang();
+if (level) route(); else startTest();
+</script>
+</body>
+</html>
